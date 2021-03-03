@@ -18,6 +18,10 @@ load("//vendor/kubevirt.io/client-go/version:def.bzl", "version_x_defs")
 go_binary(
     name = "virt-controller",
     embed = [":go_default_library"],
+    gc_goopts = [
+        "-N",
+        "-l",
+    ],
     static = "on",
     visibility = ["//visibility:public"],
     x_defs = version_x_defs(),
@@ -45,6 +49,16 @@ container_image(
     directory = "/usr/bin/",
     entrypoint = ["/usr/bin/virt-controller"],
     files = [":virt-controller"],
+    user = "1001",
+    visibility = ["//visibility:public"],
+)
+
+container_image(
+    name = "virt-controller-image-debug",
+    base = "@dlv//image",
+    directory = "/usr/bin/",
+    files = [":virt-controller"],
+    ports = ["40000"],
     user = "1001",
     visibility = ["//visibility:public"],
 )

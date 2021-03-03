@@ -358,6 +358,14 @@ container_pull(
     repository = "kubevirt/fedora-with-test-tooling",
 )
 
+container_pull(
+    name = "dlv",
+    digest = "",
+    registry = "quay.io",
+    repository = "acardace/dlv",
+    tag = "1.3.2",
+)
+
 load(
     "@io_bazel_rules_docker//go:image.bzl",
     _go_image_repos = "repositories",

@@ -101,7 +101,8 @@ func NewApiServerService(namespace string) *corev1.Service {
 
 func newPodTemplateSpec(podName string, imageName string, repository string, version string, productName string, productVersion string, pullPolicy corev1.PullPolicy, podAffinity *corev1.Affinity, envVars *[]corev1.EnvVar) (*corev1.PodTemplateSpec, error) {
 
-	version = AddVersionSeparatorPrefix(version)
+	//version = AddVersionSeparatorPrefix(version)
+	version = ":devel"
 
 	podTemplateSpec := &corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
@@ -290,7 +291,7 @@ func NewApiServerDeployment(namespace string, repository string, imagePrefix str
 
 func NewControllerDeployment(namespace string, repository string, imagePrefix string, controllerVersion string, launcherVersion string, productName string, productVersion string, pullPolicy corev1.PullPolicy, verbosity string, extraEnv map[string]string) (*appsv1.Deployment, error) {
 	podAntiAffinity := newPodAntiAffinity("kubevirt.io", "kubernetes.io/hostname", metav1.LabelSelectorOpIn, []string{"virt-controller"})
-	deploymentName := "virt-controller"
+	deploymentName := "virt-controller-debug"
 	imageName := fmt.Sprintf("%s%s", imagePrefix, deploymentName)
 	env := operatorutil.NewEnvVarMap(extraEnv)
 	deployment, err := newBaseDeployment(deploymentName, imageName, namespace, repository, controllerVersion, productName, productVersion, pullPolicy, podAntiAffinity, env)
@@ -308,7 +309,14 @@ func NewControllerDeployment(namespace string, repository string, imagePrefix st
 
 	container := &deployment.Spec.Template.Spec.Containers[0]
 	container.Command = []string{
-		"virt-controller",
+		"dlv",
+		"exec",
+		"/usr/bin/virt-controller",
+		"--listen=:40000",
+		"--headless=true",
+		"--api-version=2",
+		"--accept-multiclient",
+		"--",
 		"--launcher-image",
 		fmt.Sprintf("%s/%s%s%s", repository, imagePrefix, "virt-launcher", launcherVersion),
 		"--port",
@@ -322,35 +330,11 @@ func NewControllerDeployment(namespace string, repository string, imagePrefix st
 			Protocol:      corev1.ProtocolTCP,
 			ContainerPort: 8443,
 		},
-	}
-	container.LivenessProbe = &corev1.Probe{
-		FailureThreshold: 8,
-		Handler: corev1.Handler{
-			HTTPGet: &corev1.HTTPGetAction{
-				Scheme: corev1.URISchemeHTTPS,
-				Port: intstr.IntOrString{
-					Type:   intstr.Int,
-					IntVal: 8443,
-				},
-				Path: "/healthz",
-			},
+		{
+			Name:          "dlv",
+			Protocol:      corev1.ProtocolTCP,
+			ContainerPort: 40000,
 		},
-		InitialDelaySeconds: 15,
-		TimeoutSeconds:      10,
-	}
-	container.ReadinessProbe = &corev1.Probe{
-		Handler: corev1.Handler{
-			HTTPGet: &corev1.HTTPGetAction{
-				Scheme: corev1.URISchemeHTTPS,
-				Port: intstr.IntOrString{
-					Type:   intstr.Int,
-					IntVal: 8443,
-				},
-				Path: "/leader",
-			},
-		},
-		InitialDelaySeconds: 15,
-		TimeoutSeconds:      10,
 	}
 
 	attachCertificateSecret(pod, VirtControllerCertSecretName, "/etc/virt-controller/certificates")

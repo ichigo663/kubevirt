@@ -23,7 +23,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"k8s.io/api/admission/v1beta1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	admissionv1 "k8s.io/api/admission/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"kubevirt.io/client-go/log"
@@ -33,11 +35,16 @@ import (
 )
 
 type mutator interface {
-	Mutate(*v1beta1.AdmissionReview) *v1beta1.AdmissionResponse
+	Mutate(*admissionv1.AdmissionReview) *admissionv1.AdmissionResponse
 }
 
 func serve(resp http.ResponseWriter, req *http.Request, m mutator) {
-	response := v1beta1.AdmissionReview{}
+	response := admissionv1.AdmissionReview{
+		TypeMeta: v1.TypeMeta{
+			APIVersion: "admission.k8s.io/v1",
+			Kind:       "AdmissionReview",
+		},
+	}
 	review, err := webhookutils.GetAdmissionReview(req)
 
 	if err != nil {

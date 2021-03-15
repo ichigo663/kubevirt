@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"k8s.io/api/admission/v1beta1"
+	admissionv1 "k8s.io/api/admission/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -15,21 +15,21 @@ import (
 )
 
 type Admitter interface {
-	Admit(*v1beta1.AdmissionReview) *v1beta1.AdmissionResponse
+	Admit(*admissionv1.AdmissionReview) *admissionv1.AdmissionResponse
 }
 
 type AlwaysPassAdmitter struct {
 }
 
-func NewPassingAdmissionResponse() *v1beta1.AdmissionResponse {
-	return &v1beta1.AdmissionResponse{Allowed: true}
+func NewPassingAdmissionResponse() *admissionv1.AdmissionResponse {
+	return &admissionv1.AdmissionResponse{Allowed: true}
 }
 
-func (*AlwaysPassAdmitter) Admit(*v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
+func (*AlwaysPassAdmitter) Admit(*admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
 	return NewPassingAdmissionResponse()
 }
 
-func NewAdmissionResponse(causes []v1.StatusCause) *v1beta1.AdmissionResponse {
+func NewAdmissionResponse(causes []v1.StatusCause) *admissionv1.AdmissionResponse {
 	if len(causes) == 0 {
 		return NewPassingAdmissionResponse()
 	}
@@ -43,7 +43,7 @@ func NewAdmissionResponse(causes []v1.StatusCause) *v1beta1.AdmissionResponse {
 		}
 	}
 
-	return &v1beta1.AdmissionResponse{
+	return &admissionv1.AdmissionResponse{
 		Result: &v1.Status{
 			Message: globalMessage,
 			Reason:  v1.StatusReasonInvalid,
@@ -56,7 +56,12 @@ func NewAdmissionResponse(causes []v1.StatusCause) *v1beta1.AdmissionResponse {
 }
 
 func Serve(resp http.ResponseWriter, req *http.Request, admitter Admitter) {
-	response := v1beta1.AdmissionReview{}
+	response := admissionv1.AdmissionReview{
+		TypeMeta: v1.TypeMeta{
+			APIVersion: "admission.k8s.io/v1",
+			Kind:       "AdmissionReview",
+		},
+	}
 	review, err := webhooks.GetAdmissionReview(req)
 
 	if err != nil {

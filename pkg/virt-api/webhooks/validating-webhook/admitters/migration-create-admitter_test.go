@@ -25,7 +25,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
-	"k8s.io/api/admission/v1beta1"
+	admissionv1 "k8s.io/api/admission/v1"
 	k8sv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -66,8 +66,8 @@ var _ = Describe("Validating MigrationCreate Admitter", func() {
 
 		enableFeatureGate(virtconfig.LiveMigrationGate)
 
-		ar := &v1beta1.AdmissionReview{
-			Request: &v1beta1.AdmissionRequest{
+		ar := &admissionv1.AdmissionReview{
+			Request: &admissionv1.AdmissionRequest{
 				Resource: webhooks.MigrationGroupVersionResource,
 				Object: runtime.RawExtension{
 					Raw: migrationBytes,
@@ -99,8 +99,8 @@ var _ = Describe("Validating MigrationCreate Admitter", func() {
 
 		enableFeatureGate(virtconfig.LiveMigrationGate)
 
-		ar := &v1beta1.AdmissionReview{
-			Request: &v1beta1.AdmissionRequest{
+		ar := &admissionv1.AdmissionReview{
+			Request: &admissionv1.AdmissionRequest{
 				Resource: webhooks.MigrationGroupVersionResource,
 				Object: runtime.RawExtension{
 					Raw: migrationBytes,
@@ -130,8 +130,8 @@ var _ = Describe("Validating MigrationCreate Admitter", func() {
 
 		disableFeatureGates()
 
-		ar := &v1beta1.AdmissionReview{
-			Request: &v1beta1.AdmissionRequest{
+		ar := &admissionv1.AdmissionReview{
+			Request: &admissionv1.AdmissionRequest{
 				Resource: webhooks.MigrationGroupVersionResource,
 				Object: runtime.RawExtension{
 					Raw: migrationBytes,
@@ -166,8 +166,8 @@ var _ = Describe("Validating MigrationCreate Admitter", func() {
 
 		enableFeatureGate(virtconfig.LiveMigrationGate)
 
-		ar := &v1beta1.AdmissionReview{
-			Request: &v1beta1.AdmissionRequest{
+		ar := &admissionv1.AdmissionReview{
+			Request: &admissionv1.AdmissionRequest{
 				Resource: webhooks.MigrationGroupVersionResource,
 				Object: runtime.RawExtension{
 					Raw: migrationBytes,
@@ -202,8 +202,8 @@ var _ = Describe("Validating MigrationCreate Admitter", func() {
 
 		enableFeatureGate(virtconfig.LiveMigrationGate)
 
-		ar := &v1beta1.AdmissionReview{
-			Request: &v1beta1.AdmissionRequest{
+		ar := &admissionv1.AdmissionReview{
+			Request: &admissionv1.AdmissionRequest{
 				Resource: webhooks.MigrationGroupVersionResource,
 				Object: runtime.RawExtension{
 					Raw: migrationBytes,
@@ -234,8 +234,8 @@ var _ = Describe("Validating MigrationCreate Admitter", func() {
 
 		enableFeatureGate(virtconfig.LiveMigrationGate)
 
-		ar := &v1beta1.AdmissionReview{
-			Request: &v1beta1.AdmissionRequest{
+		ar := &admissionv1.AdmissionReview{
+			Request: &admissionv1.AdmissionRequest{
 				Resource: webhooks.MigrationGroupVersionResource,
 				Object: runtime.RawExtension{
 					Raw: migrationBytes,
@@ -278,8 +278,8 @@ var _ = Describe("Validating MigrationCreate Admitter", func() {
 
 		enableFeatureGate(virtconfig.LiveMigrationGate)
 
-		ar := &v1beta1.AdmissionReview{
-			Request: &v1beta1.AdmissionRequest{
+		ar := &admissionv1.AdmissionReview{
+			Request: &admissionv1.AdmissionRequest{
 				Resource: webhooks.MigrationGroupVersionResource,
 				Object: runtime.RawExtension{
 					Raw: migrationBytes,
@@ -292,12 +292,12 @@ var _ = Describe("Validating MigrationCreate Admitter", func() {
 		Expect(resp.Result.Message).To(ContainSubstring("DisksNotLiveMigratable"))
 	})
 
-	table.DescribeTable("should reject documents containing unknown or missing fields for", func(data string, validationResult string, gvr metav1.GroupVersionResource, review func(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse) {
+	table.DescribeTable("should reject documents containing unknown or missing fields for", func(data string, validationResult string, gvr metav1.GroupVersionResource, review func(ar *admissionv1.AdmissionReview) *admissionv1.AdmissionResponse) {
 		input := map[string]interface{}{}
 		json.Unmarshal([]byte(data), &input)
 
-		ar := &v1beta1.AdmissionReview{
-			Request: &v1beta1.AdmissionRequest{
+		ar := &admissionv1.AdmissionReview{
+			Request: &admissionv1.AdmissionRequest{
 				Resource: gvr,
 				Object: runtime.RawExtension{
 					Raw: []byte(data),
